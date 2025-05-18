@@ -1,0 +1,64 @@
+-- 🐔 Tabla de productos
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('combo', 'porcion', 'individual')),
+    available BOOLEAN DEFAULT TRUE
+);
+
+-- 📦 Pedidos (no requiere login del cliente)
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(100),
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'en preparación', 'entregado', 'cancelado')),
+    
+    -- Opcional: empleado/admin que gestionó el pedido
+    handled_by INT REFERENCES users(id)
+);
+
+-- 🛒 Productos por pedido (relación muchos a muchos)
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INT REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INT REFERENCES products(id),
+    quantity INT NOT NULL,
+    price_at_order DECIMAL(10,2) NOT NULL,  -- copia del precio en el momento del pedido
+    subtotal DECIMAL(10,2) GENERATED ALWAYS AS (quantity * price_at_order) STORED
+);
+
+-- 🧾 Facturas (relación uno a uno con pedido)
+CREATE TABLE invoices (
+    id SERIAL PRIMARY KEY,
+    order_id INT UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    invoice_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'efectivo' CHECK (payment_method IN ('efectivo', 'tarjeta', 'QR')),
+    nit_cliente VARCHAR(20),
+    nombre_cliente_factura VARCHAR(100)
+);
+
+-- 🔐 Usuarios administradores (para login del panel de administración)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role VARCHAR(20) DEFAULT 'admin' CHECK (role IN ('admin', 'empleado')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Agregar campo para la imagen del producto
+ALTER TABLE public.products
+ADD COLUMN image_url TEXT;
+
+-- Agregar campo estado con valores restringidos
+ALTER TABLE public.products
+ADD COLUMN estado VARCHAR(50) DEFAULT 'disponible' 
+CHECK (estado IN ('disponible', 'agotado', 'temporalmente no disponible'));
+
+-- Agregar campo para controlar el stock disponible
+ALTER TABLE public.products
+ADD COLUMN stock INT DEFAULT 0 
+CHECK (stock >= 0);
