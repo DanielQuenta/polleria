@@ -4,11 +4,20 @@ const path = require('path');
 require('dotenv').config();
 
 // Importar rutas (deben ser routers "puros", sus rutas internas empiezan en "/")
+
 const authRoutes = require('./routes/auth');            // /login, /register, etc.
 const productRoutes = require('./routes/products');     // /, /:id, etc.
 const invoiceRoutes = require('./routes/invoices');     // /, /:id, etc.
 const ordersRouter = require('./routes/orders');        // /, /:id, etc.
 const orderItemsRouter = require('./routes/order_items'); // /, /:id, etc.
+
+const authRoutes = require('./routes/auth');                // /login, /register, etc.
+const productRoutes = require('./routes/products');         // /, /:id, etc.
+const invoiceRoutes = require('./routes/invoices');         // /, /:id, etc.
+const ordersRouter = require('./routes/orders');            // /, /:id, etc.
+const orderItemsRouter = require('./routes/order_items');   // /, /:id, etc.
+const usersRouter = require('./routes/users');              // /, /:id, etc.
+1061008 (Primer commit del proyecto pollería)
 
 // Inicializar app
 const app = express();
@@ -21,11 +30,20 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rutas
+
 app.use('/api', authRoutes); // Login/Registro, ejemplo: /api/login
 app.use('/api/products', productRoutes); // /api/products
 app.use('/api/invoices', invoiceRoutes); // /api/invoices
 app.use('/api/orders', ordersRouter);    // /api/orders
 app.use('/api/order_items', orderItemsRouter); // /api/order_items
+
+app.use('/api', authRoutes);                 // /api/login, /api/register, etc.
+app.use('/api/products', productRoutes);     // /api/products
+app.use('/api/invoices', invoiceRoutes);     // /api/invoices
+app.use('/api/orders', ordersRouter);        // /api/orders
+app.use('/api/order_items', orderItemsRouter); // /api/order_items
+app.use('/api/users', usersRouter);          // /api/users
+ 1061008 (Primer commit del proyecto pollería)
 
 // Puerto de escucha
 const PORT = process.env.PORT || 4000;
