@@ -1,10 +1,50 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+// Paletas de colores
+const mainTheme = {
+  SOFT_YELLOW: "#fffbe8",
+  SOFT_ORANGE: "#FFD166",
+  SOFT_GREEN: "#d7f9e5",
+  SOFT_BROWN: "#b35012",
+  SOFT_PINK: "#ffd8d8",
+  SOFT_GRAY: "#f4f4f4",
+  SOFT_RED: "#ffd8d8",
+  TEXT_DANGER: "#c94a4a"
+};
+const pastelTheme = {
+  SOFT_YELLOW: "#fffbe8",
+  SOFT_ORANGE: "#ffe4ba",
+  SOFT_GREEN: "#d7f9e5",
+  SOFT_BROWN: "#b37d53",
+  SOFT_PINK: "#ffe8e8",
+  SOFT_GRAY: "#f4f4f4",
+  SOFT_RED: "#ffd8d8",
+  TEXT_DANGER: "#c94a4a"
+};
+
+function getThemeColors() {
+  const theme = localStorage.getItem('theme') || 'main';
+  return theme === 'main' ? mainTheme : pastelTheme;
+}
 
 // Cambia este valor según el usuario logueado real
 const LOGGED_USER_ID = 1;
 
 function Orders({ onOrderCreated, colors }) {
+  // Usa el theme del dashboard si no viene por props
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'main');
+  const palette = colors || (theme === 'main' ? mainTheme : pastelTheme);
+  const navigate = useNavigate();
+
+  // Permitir cambiar de tema en esta vista también
+  const handleToggleTheme = () => {
+    const newTheme = theme === 'main' ? 'pastel' : 'main';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
   const [orders, setOrders] = useState([]);
   const [form, setForm] = useState({
     customer_name: '',
@@ -23,7 +63,6 @@ function Orders({ onOrderCreated, colors }) {
   const [page, setPage] = useState(1);
   const perPage = 6;
 
-  // Devuelve la fecha/hora local en formato compatible con <input type="datetime-local">
   function getNowDatetimeLocal() {
     const now = new Date();
     now.setSeconds(0, 0);
@@ -115,31 +154,30 @@ function Orders({ onOrderCreated, colors }) {
   };
 
   function statusColor(status) {
-    if (status === 'entregado') return colors.SOFT_GREEN;
-    if (status === 'cancelado') return colors.SOFT_RED;
-    if (status === 'en preparación') return colors.SOFT_ORANGE;
-    return colors.SOFT_YELLOW;
+    if (status === 'entregado') return palette.SOFT_GREEN;
+    if (status === 'cancelado') return palette.SOFT_RED;
+    if (status === 'en preparación') return palette.SOFT_ORANGE;
+    return palette.SOFT_YELLOW;
   }
   function statusTextColor(status) {
-    if (status === 'entregado' || status === 'en preparación') return colors.SOFT_BROWN;
-    if (status === 'cancelado') return colors.TEXT_DANGER || "#c94a4a";
-    return colors.SOFT_BROWN;
+    if (status === 'entregado' || status === 'en preparación') return palette.SOFT_BROWN;
+    if (status === 'cancelado') return palette.TEXT_DANGER || "#c94a4a";
+    return palette.SOFT_BROWN;
   }
 
-  // Iconos decorativos según estado
   function statusIcon(status) {
-    if (status === 'entregado') return <i className="bi bi-check-circle-fill" style={{ color: colors.SOFT_GREEN, fontSize: 20 }} title="Entregado"></i>;
-    if (status === 'cancelado') return <i className="bi bi-x-circle-fill" style={{ color: colors.SOFT_RED, fontSize: 20 }} title="Cancelado"></i>;
-    if (status === 'en preparación') return <i className="bi bi-alarm" style={{ color: colors.SOFT_ORANGE, fontSize: 20 }} title="En preparación"></i>;
-    return <i className="bi bi-hourglass-split" style={{ color: colors.SOFT_YELLOW, fontSize: 20 }} title="Pendiente"></i>;
+    if (status === 'entregado') return <i className="bi bi-check-circle-fill" style={{ color: palette.SOFT_GREEN, fontSize: 20 }} title="Entregado"></i>;
+    if (status === 'cancelado') return <i className="bi bi-x-circle-fill" style={{ color: palette.SOFT_RED, fontSize: 20 }} title="Cancelado"></i>;
+    if (status === 'en preparación') return <i className="bi bi-alarm" style={{ color: palette.SOFT_ORANGE, fontSize: 20 }} title="En preparación"></i>;
+    return <i className="bi bi-hourglass-split" style={{ color: palette.SOFT_YELLOW, fontSize: 20 }} title="Pendiente"></i>;
   }
 
   function userIcon() {
-    return <i className="bi bi-person-badge" style={{ color: colors.SOFT_BROWN, fontSize: 18, marginRight: 3 }}></i>;
+    return <i className="bi bi-person-badge" style={{ color: palette.SOFT_BROWN, fontSize: 18, marginRight: 3 }}></i>;
   }
 
   function calendarIcon() {
-    return <i className="bi bi-calendar-event" style={{ color: colors.SOFT_ORANGE, fontSize: 18, marginRight: 3 }}></i>;
+    return <i className="bi bi-calendar-event" style={{ color: palette.SOFT_ORANGE, fontSize: 18, marginRight: 3 }}></i>;
   }
 
   const filteredOrders = orders.filter(order => {
@@ -158,26 +196,57 @@ function Orders({ onOrderCreated, colors }) {
 
   return (
     <div className="container my-4" style={{
-      background: colors.SOFT_YELLOW,
+      background: palette.SOFT_YELLOW,
       borderRadius: 20,
       padding: 20,
       transition: 'background 0.3s'
     }}>
-      <h3 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: colors.SOFT_BROWN }}>
-        <i className="bi bi-receipt-cutoff" style={{ color: colors.SOFT_ORANGE, fontSize: 33 }}></i>
+      {/* Botón de volver y cambiar tema */}
+      <div className="mb-4 d-flex gap-2">
+        <button
+          className="btn fw-bold d-flex align-items-center gap-2"
+          onClick={() => navigate('/dashboard')}
+          style={{
+            background: palette.SOFT_ORANGE,
+            color: palette.SOFT_BROWN,
+            border: `1.5px solid ${palette.SOFT_GREEN}`,
+            borderRadius: 8,
+            fontWeight: "bold",
+            boxShadow: `0 1px 4px ${palette.SOFT_ORANGE}50`
+          }}
+        >
+          <i className="bi bi-arrow-left"></i> Volver
+        </button>
+        <button
+          className="btn fw-bold d-flex align-items-center gap-2"
+          style={{
+            background: palette.SOFT_GREEN,
+            color: palette.SOFT_BROWN,
+            border: `1.5px solid ${palette.SOFT_ORANGE}`,
+            borderRadius: 8,
+            fontWeight: "bold"
+          }}
+          onClick={handleToggleTheme}
+        >
+          <i className={`bi ${theme === 'main' ? 'bi-brightness-high' : 'bi-moon'}`}></i>
+          Cambiar tema
+        </button>
+      </div>
+      <h3 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: palette.SOFT_BROWN }}>
+        <i className="bi bi-receipt-cutoff" style={{ color: palette.SOFT_ORANGE, fontSize: 33 }}></i>
         {editMode ? 'Editar Orden' : 'Agregar Orden'}
       </h3>
       <form onSubmit={handleSubmit} className="mb-4 row g-2 align-items-end"
         style={{
-          background: colors.SOFT_GRAY,
+          background: palette.SOFT_GRAY,
           borderRadius: 16,
-          border: `2px solid ${colors.SOFT_ORANGE}`,
-          boxShadow: `0 2px 10px ${colors.SOFT_ORANGE}`,
+          border: `2px solid ${palette.SOFT_ORANGE}`,
+          boxShadow: `0 2px 10px ${palette.SOFT_ORANGE}`,
           transition: 'all 0.3s'
         }}
       >
         <div className="col-sm-3">
-          <label className="mb-1 fw-semibold" style={{ color: colors.SOFT_BROWN }}>
+          <label className="mb-1 fw-semibold" style={{ color: palette.SOFT_BROWN }}>
             <i className="bi bi-person-circle"></i> Cliente
           </label>
           <input
@@ -186,11 +255,11 @@ function Orders({ onOrderCreated, colors }) {
             value={form.customer_name}
             onChange={e => setForm({ ...form, customer_name: e.target.value })}
             required
-            style={{ borderRadius: 8, border: `1px solid ${colors.SOFT_ORANGE}` }}
+            style={{ borderRadius: 8, border: `1px solid ${palette.SOFT_ORANGE}` }}
           />
         </div>
         <div className="col-sm-3">
-          <label className="mb-1 fw-semibold" style={{ color: colors.SOFT_BROWN }}>
+          <label className="mb-1 fw-semibold" style={{ color: palette.SOFT_BROWN }}>
             <i className="bi bi-calendar2-week"></i> Fecha y hora
           </label>
           <input
@@ -199,18 +268,18 @@ function Orders({ onOrderCreated, colors }) {
             value={form.order_date}
             onChange={e => setForm({ ...form, order_date: e.target.value })}
             required
-            style={{ borderRadius: 8, border: `1px solid ${colors.SOFT_ORANGE}` }}
+            style={{ borderRadius: 8, border: `1px solid ${palette.SOFT_ORANGE}` }}
           />
         </div>
         <div className="col-sm-2">
-          <label className="mb-1 fw-semibold" style={{ color: colors.SOFT_BROWN }}>
+          <label className="mb-1 fw-semibold" style={{ color: palette.SOFT_BROWN }}>
             <i className="bi bi-info-circle"></i> Estado
           </label>
           <select
             className="form-select"
             value={form.status}
             onChange={e => setForm({ ...form, status: e.target.value })}
-            style={{ borderRadius: 8, border: `1px solid ${colors.SOFT_ORANGE}` }}
+            style={{ borderRadius: 8, border: `1px solid ${palette.SOFT_ORANGE}` }}
           >
             <option value="pendiente">Pendiente</option>
             <option value="en preparación">En preparación</option>
@@ -219,7 +288,7 @@ function Orders({ onOrderCreated, colors }) {
           </select>
         </div>
         <div className="col-sm-2">
-          <label className="mb-1 fw-semibold" style={{ color: colors.SOFT_BROWN }}>
+          <label className="mb-1 fw-semibold" style={{ color: palette.SOFT_BROWN }}>
             <i className="bi bi-person-badge"></i> Encargado
           </label>
           <input
@@ -229,14 +298,14 @@ function Orders({ onOrderCreated, colors }) {
             value={form.handled_by}
             onChange={e => setForm({ ...form, handled_by: e.target.value })}
             readOnly
-            style={{ background: colors.SOFT_GRAY, borderRadius: 8, border: `1px solid ${colors.SOFT_ORANGE}`, cursor: 'not-allowed' }}
+            style={{ background: palette.SOFT_GRAY, borderRadius: 8, border: `1px solid ${palette.SOFT_ORANGE}`, cursor: 'not-allowed' }}
           />
         </div>
         <div className="col-sm-2 d-flex gap-1 align-items-end">
           <button className="btn" type="submit"
             style={{
-              background: colors.SOFT_ORANGE,
-              color: colors.SOFT_BROWN,
+              background: palette.SOFT_ORANGE,
+              color: palette.SOFT_BROWN,
               borderRadius: 8,
               fontWeight: "bold",
               border: "none"
@@ -267,7 +336,7 @@ function Orders({ onOrderCreated, colors }) {
 
       {/* Selector de fecha para búsquedas */}
       <div className="mb-4 d-flex align-items-center gap-2">
-        <label className="fw-bold" style={{ color: colors.SOFT_BROWN }}>
+        <label className="fw-bold" style={{ color: palette.SOFT_BROWN }}>
           <i className="bi bi-calendar-range"></i> Ver pedidos del día:&nbsp;
         </label>
         <input
@@ -275,7 +344,7 @@ function Orders({ onOrderCreated, colors }) {
           value={searchDate}
           onChange={e => setSearchDate(e.target.value)}
           className="form-control"
-          style={{ maxWidth: 180, borderRadius: 8, border: `1px solid ${colors.SOFT_ORANGE}` }}
+          style={{ maxWidth: 180, borderRadius: 8, border: `1px solid ${palette.SOFT_ORANGE}` }}
         />
       </div>
 
@@ -287,7 +356,7 @@ function Orders({ onOrderCreated, colors }) {
               style={{
                 border: `2px solid ${statusColor(order.status)}`,
                 borderRadius: 16,
-                background: colors.SOFT_GRAY,
+                background: palette.SOFT_GRAY,
                 transition: 'border 0.3s, background 0.3s'
               }}
             >
@@ -350,7 +419,7 @@ function Orders({ onOrderCreated, colors }) {
         >
           <i className="bi bi-chevron-double-left"></i> Anterior
         </button>
-        <span style={{ color: colors.SOFT_BROWN, fontWeight: "bold" }}>
+        <span style={{ color: palette.SOFT_BROWN, fontWeight: "bold" }}>
           Página {page} de {totalPages}
         </span>
         <button

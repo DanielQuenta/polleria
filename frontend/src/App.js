@@ -6,6 +6,7 @@ import ProductManager from './components/ProductManager';
 import InvoiceManager from './components/InvoiceManager';
 import PrivateRoute from './components/PrivateRoute';
 import UserManager from './components/UserManager';
+import Orders from './components/orders';
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginForm />} />
         <Route
-          path="/dashboard"
+          path="/dashboard/*"
           element={
             <PrivateRoute>
               <Dashboard />
@@ -41,6 +42,15 @@ function App() {
           element={
             <PrivateRoute>
               <UserManager />
+            </PrivateRoute>
+          }
+        />
+        {/* RUTA DE PEDIDOS INDEPENDIENTE, SIN DASHBOARD */}
+        <Route
+          path="/orders"
+          element={
+            <PrivateRoute>
+              <Orders />
             </PrivateRoute>
           }
         />

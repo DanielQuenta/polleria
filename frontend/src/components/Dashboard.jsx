@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, useParams } from 'react-router-dom';
 import InvoiceManager from './InvoiceManager';
 import Orders from './orders';
 import Order_items from './order_items';
-import logo from '../assets/logo.png'; // Ajusta la ruta si tu Dashboard está en otra carpeta
+import Notification from './Notification';
+import logo from '../assets/logo.png'; // Asegúrate que la ruta del logo sea correcta
 
-// Paleta principal: igual a login/header/footer
 const mainTheme = {
   GRADIENT: "linear-gradient(90deg, #E63946 0%, #FFB347 60%, #FFD166 100%)",
   CARD_BG: "rgba(255,255,255,0.93)",
@@ -22,7 +22,6 @@ const mainTheme = {
   LOGOUT_BG: "#f4f4f4",
   LOGOUT_TEXT: "#E63946",
 };
-// Paleta pastel suave
 const pastelTheme = {
   SOFT_YELLOW: "#fffbe8",
   SOFT_ORANGE: "#ffe4ba",
@@ -34,12 +33,11 @@ const pastelTheme = {
 };
 
 function Dashboard() {
-  const [lastOrderId, setLastOrderId] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'main');
   const [user, setUser] = useState(null);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
 
-  // Leer usuario desde localStorage al montar
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) setUser(JSON.parse(storedUser));
@@ -66,13 +64,50 @@ function Dashboard() {
     navigate('/InvoiceManager');
   };
 
-  // Redirección absoluta a /usuarios
+  // CAMBIO: Navegar a /orders fuera del dashboard
+  const handleGoToOrders = () => {
+    navigate('/orders');
+  };
+
   const handleGoToUsers = () => {
     window.location.href = "http://localhost:3000/usuarios";
   };
 
+  // Notificación y redirección al crear pedido
+  const handleOrderCreated = (orderId) => {
+    if (orderId) {
+      setNotification({ message: "¡Pedido agregado exitosamente!", type: "success" });
+      setTimeout(() => {
+        setNotification(null);
+        navigate(`/dashboard/order-items/${orderId}`);
+      }, 1600);
+    }
+  };
+
+  // Notificación y redirección al crear factura (debes pasar este handler a InvoiceManager)
+  const handleInvoiceCreated = () => {
+    setNotification({ message: "¡Factura agregada exitosamente!", type: "success" });
+    setTimeout(() => {
+      setNotification(null);
+      navigate('/dashboard');
+    }, 1600);
+  };
+
+  // Wrapper para obtener orderId de params y pasar colores/navegador/notificación
+  function OrderItemsWrapper() {
+    const { orderId } = useParams();
+    return (
+      <Order_items
+        orderId={orderId}
+        colors={colors}
+        setNotification={setNotification}
+        navigate={navigate}
+      />
+    );
+  }
+
   return (
-    <div 
+    <div
       className="container-fluid"
       style={{
         background: theme === 'main' ? mainTheme.GRADIENT : pastelTheme.SOFT_YELLOW,
@@ -175,6 +210,20 @@ function Dashboard() {
             >
               Menú de Productos
             </button>
+            {/* Botón de pedidos debajo de Menú de Productos */}
+            <button
+              className="btn w-100 mb-2"
+              style={{
+                background: theme === 'main' ? mainTheme.BTN_BG : pastelTheme.SOFT_GREEN,
+                color: theme === 'main' ? mainTheme.BTN_TEXT : pastelTheme.SOFT_BROWN,
+                fontWeight: "bold",
+                border: `1.5px solid ${theme === 'main' ? mainTheme.BORDER : pastelTheme.SOFT_ORANGE}`,
+                borderRadius: 8
+              }}
+              onClick={handleGoToOrders}
+            >
+              Pedidos
+            </button>
             {/* Botón Cambiar tema */}
             <button
               className="btn w-100 mb-2 fw-bold"
@@ -222,34 +271,50 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Notificación flotante */}
+      {notification && <Notification message={notification.message} type={notification.type} />}
+
+      {/* Contenido principal con rutas */}
       <div className="mt-4">
-        <div
-          className="p-3 mb-4 rounded shadow-sm"
-          style={{
-            background: theme === 'main' ? mainTheme.CARD_BG : pastelTheme.SOFT_YELLOW,
-            border: `2px solid ${theme === 'main' ? mainTheme.BORDER : pastelTheme.SOFT_ORANGE}`,
-            borderRadius: 16,
-            boxShadow: theme === 'main' ? mainTheme.SHADOW : `0 2px 10px ${pastelTheme.SOFT_ORANGE}`,
-            transition: 'all 0.4s'
-          }}
-        >
-          <Orders onOrderCreated={setLastOrderId} colors={colors} />
-        </div>
-        <div
-          className="p-3 mb-4 rounded shadow-sm"
-          style={{
-            background: theme === 'main' ? mainTheme.CARD_BG : pastelTheme.SOFT_GREEN,
-            border: `2px solid ${theme === 'main' ? mainTheme.BORDER : pastelTheme.SOFT_ORANGE}`,
-            borderRadius: 16,
-            boxShadow: theme === 'main' ? mainTheme.SHADOW : `0 2px 10px ${pastelTheme.SOFT_GREEN}`,
-            transition: 'all 0.4s'
-          }}
-        >
-          <Order_items orderId={lastOrderId} colors={colors} />
-        </div>
-        {/* Si quieres ver el menú de facturas en el dashboard, puedes descomentar esto: */}
-        {/* <div ...> <InvoiceManager colors={colors} /> </div> */}
+        <Routes>
+          {/* MAIN: ahora la ruta principal es order-items SIN orderId */}
+          <Route
+            path="/"
+            element={
+              <div
+                className="p-3 mb-4 rounded shadow-sm"
+                style={{
+                  background: theme === 'main' ? mainTheme.CARD_BG : pastelTheme.SOFT_GREEN,
+                  border: `2px solid ${theme === 'main' ? mainTheme.BORDER : pastelTheme.SOFT_ORANGE}`,
+                  borderRadius: 16,
+                  boxShadow: theme === 'main' ? mainTheme.SHADOW : `0 2px 10px ${pastelTheme.SOFT_GREEN}`,
+                  transition: 'all 0.4s'
+                }}
+              >
+                <OrderItemsWrapper />
+              </div>
+            }
+          />
+          {/* Mantén la ruta para order-items con ID por si se navega directo */}
+          <Route
+            path="/order-items/:orderId"
+            element={
+              <div
+                className="p-3 mb-4 rounded shadow-sm"
+                style={{
+                  background: theme === 'main' ? mainTheme.CARD_BG : pastelTheme.SOFT_GREEN,
+                  border: `2px solid ${theme === 'main' ? mainTheme.BORDER : pastelTheme.SOFT_ORANGE}`,
+                  borderRadius: 16,
+                  boxShadow: theme === 'main' ? mainTheme.SHADOW : `0 2px 10px ${pastelTheme.SOFT_GREEN}`,
+                  transition: 'all 0.4s'
+                }}
+              >
+                <OrderItemsWrapper />
+              </div>
+            }
+          />
+          {/* (Ya NO incluir Orders como ruta hija aquí; estará fuera del dashboard) */}
+        </Routes>
       </div>
     </div>
   );
